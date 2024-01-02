@@ -1,0 +1,108 @@
+class AddSubjects(tk.Frame):
+  def init(self,parent,controller):
+    tk.Frame.init(self,parent)
+    label1=tk.Label(self,text="Add subject's name seperated by commas(,)",font=("Times",16))
+    txt1=tk.Text(self,font=("Times",16),width=48,height=3)
+    
+    bt2=tk.Button(self,text="Add subjects!",bg="orange",font=("Times",16),height=2,width=17,command=lambda:self.addsub(txt1.get("1.0",tk.END),controller))
+    bt1=tk.Button(self,text="Back to home",bg="red",font=("Times",16),height=2,width=17,command=lambda:controller.show_frame(StartPage))
+    label1.pack()
+    txt1.pack()
+    bt2.pack()  
+    bt1.pack()
+  def addsub(self,a,controller):
+    
+    conn=sql.connect('attend')
+    cur=conn.cursor()
+    cur.execute('DROP TABLE IF EXISTS attable')
+    
+    a=a[0:len(a)-1]
+    a=a.split(",")
+    
+    if len(a)==1 and a[0]=="" :
+      messagebox.showinfo("Alert!", "Please enter the subjects")
+    else:
+      sid=1
+      cur.execute('CREATE TABLE attable(subid INTEGER,subject TEXT,attended INTEGER,bunked INTEGER)')
+      for sub in a:
+        cur.execute('INSERT INTO attable (subid,subject,attended,bunked) VALUES(?,?,?,?)',(sid,sub,0,0))
+        sid=sid+1
+      conn.commit()
+      conn.close()
+      messagebox.showinfo("congratulations!", "subjects are added")
+      controller.show_frame(StartPage)
+
+
+class TodayData(tk.Frame):
+  def init(self,parent,controller):
+    tk.Frame.init(self,parent)
+    label1=tk.Label(self,text="Enter data of today",font=("Times",24))
+    label1.pack()
+    bt2=tk.Button(self,text="Show id of subjects",bg="yellow",font=("Times",16),height=2,width=17,command=lambda:self.showid(controller))
+    bt1=tk.Button(self,text="Back to home",bg="red",font=("Times",16),height=2,width=17,command=lambda:controller.show_frame(StartPage))
+    lb2=tk.Label(self,text="Input the corresponding Subject ID: ",font=("Times",15))
+    txt1=tk.Entry(self)
+    lb2.pack()
+    txt1.pack()
+    lb3=tk.Label(self,text="Number of times attended:",font=("Times",15))
+    txt2=tk.Entry(self)
+    lb4=tk.Label(self,text="Number of times bunked:",font=("Times",15))
+    txt3=tk.Entry(self)
+    lb3.pack()
+    txt2.pack()
+    lb4.pack()
+    txt3.pack()
+    bt3=tk.Button(self,text="Add to record",bg="orange",font=("Times",16),height=2,width=17,command=lambda:self.addrecord(txt1.get(),txt2.get(),txt3.get()))
+    bt3.pack()
+    bt2.pack()
+    bt1.pack()
+  def showid(self,controller):
+    try:
+      conn=sql.connect("attend")
+      cur=conn.cursor()
+      cur.execute('SELECT * FROM attable')
+      text=""
+      for w in cur:
+        text=text+"sub id "+str(w[0])+" "+w[1]+"\n"
+      messagebox.showinfo("Subject ID: ", text)
+      conn.commit()
+      conn.close()
+    except:
+      messagebox.showinfo("Alert!", "There is no record")  
+  def addrecord(self,i,p,b):
+    i=int(i)
+    
+    if p=="" or p==" " or p=="\n":
+      p=0
+    else:
+      p=int(p)
+    if b=="" or b==" " or b=="\n":
+      b=0
+    else:
+      b=int(b)
+    try:
+    
+      conn=sql.connect("attend")
+      cur=conn.cursor()
+      cur.execute("SELECT * FROM attable WHERE subid=?",(i,))
+      kk=cur.fetchone()
+      np=kk[2]+p
+      
+      nb=kk[3]+b
+        
+      cur.execute("UPDATE attable SET attended = ? WHERE subid= ?",(np,i))
+      cur.execute("UPDATE attable SET bunked = ? WHERE subid= ?",(nb,i))
+      conn.commit()
+      conn.close()
+      messagebox.showinfo("Alert!", "Done")
+    except:
+      messagebox.showinfo("Alert!", "There is no record")    
+      
+def main():
+  app=AttendanceManager()
+  app.title("Attendance Management - CopyAssignment")
+  app.mainloop()
+
+
+if name=="main":
+  main()
